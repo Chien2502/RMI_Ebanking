@@ -11,8 +11,6 @@ bin/
 *.tar.gz
 *.rar
 
-# Test data / temp files
-data/test_accounts.csv
 
 # IDE & Editor files
 .idea/

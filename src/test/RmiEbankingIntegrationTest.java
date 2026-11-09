@@ -3,6 +3,7 @@ package test;
 import common.Account;
 import common.BankService;
 import common.ClientCallback;
+import common.ServerDiscovery;
 import common.TransactionNotification;
 import server.AccountRepository;
 import server.BankServiceImpl;
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * 7. Observer Callback: Client A chuyển cho Client B, Client B nhận callback tức thì
  * 8. Hủy callback Client B, chuyển tiền tiếp vẫn thành công không lỗi
  * 9. Đọc lại từ file CSV để kiểm chứng tính bền vững dữ liệu (Persistence)
+ * 10. UDP Broadcast Auto-Discovery: Server phát nhịp 2s, Client tự dò tìm IP
  */
 public class RmiEbankingIntegrationTest {
     private static final int TEST_PORT = 11099;
@@ -161,7 +163,7 @@ public class RmiEbankingIntegrationTest {
                 failed++;
             }
 
-            // 8. Hủy callback 0456 (giả lập tắt client 0456), chuyển tiếp vẫn thành công
+            // 8. Hủy callback 0456 (mô phỏng tắt client), chuyển tiếp 500đ...
             System.out.print("[Test 8] Hủy callback 0456 (mô phỏng tắt client), chuyển tiếp 500đ... ");
             bankService.unregisterCallback("0456");
             UnicastRemoteObject.unexportObject(callback0456, true);
@@ -179,7 +181,7 @@ public class RmiEbankingIntegrationTest {
                 failed++;
             }
 
-            // 9. Kiểm chứng tính bền vững (Persistence) từ file CSV
+            // 9. Kiểm chứng tính bền vững (Persistence) qua đọc file CSV
             System.out.print("[Test 9] Kiểm chứng tính bền vững (Persistence) qua đọc file CSV... ");
             AccountRepository freshRepo = new AccountRepository(TEST_CSV);
             Account fresh0123 = freshRepo.getAccount("0123");
@@ -190,6 +192,20 @@ public class RmiEbankingIntegrationTest {
                 passed++;
             } else {
                 System.out.println("FAILED! ❌");
+                failed++;
+            }
+
+            // 10. Kiểm chứng cơ chế UDP Broadcast Auto-Discovery (Server phát nhịp 2s, Client tự dò tìm)
+            System.out.print("[Test 10] UDP Auto-Discovery: Server phát nhịp 2s, Client tự dò IP... ");
+            Thread beaconThread = ServerDiscovery.startBeacon("10.123.66.110", TEST_PORT, "BankService");
+            ServerDiscovery.DiscoveredServer discovered = ServerDiscovery.discoverServer(3500);
+            beaconThread.interrupt();
+
+            if (discovered != null && "10.123.66.110".equals(discovered.getIp()) && discovered.getPort() == TEST_PORT) {
+                System.out.println("PASSED! (Bắt được Server tại: " + discovered + ") ✔");
+                passed++;
+            } else {
+                System.out.println("FAILED! ❌ (Discovered: " + discovered + ")");
                 failed++;
             }
 
@@ -217,4 +233,3 @@ public class RmiEbankingIntegrationTest {
         }
     }
 }
-

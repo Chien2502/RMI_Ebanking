@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 > nul
 echo ======================================================================
-echo    THIẾT LẬP WINDOWS DEFENDER FIREWALL CHO JAVA RMI (APPLICATION-LEVEL)
+echo    THIẾT LẬP WINDOWS DEFENDER FIREWALL CHO JAVA RMI & UDP DISCOVERY
 echo ======================================================================
 
 :: 1. Kiểm tra quyền Administrator
@@ -34,23 +34,23 @@ echo Tìm thấy Java  : "%JAVA_BIN%"
 echo Tìm thấy Javaw : "%JAVAW_BIN%"
 echo.
 
-:: 3. Thêm Inbound Rule cho java.exe
-echo [1/2] Đang tạo Inbound Rule cho java.exe...
+:: 3. Thêm Inbound Rule cho java.exe (Cho phép cả TCP và UDP)
+echo [1/2] Đang tạo Inbound Rule cho java.exe (TCP + UDP Broadcast)...
 netsh advfirewall firewall delete rule name="Java Platform SE Binary (RMI Inbound)" >nul 2>&1
-netsh advfirewall firewall add rule name="Java Platform SE Binary (RMI Inbound)" dir=in action=allow program="%JAVA_BIN%" enable=yes profile=any protocol=TCP >nul
+netsh advfirewall firewall add rule name="Java Platform SE Binary (RMI Inbound)" dir=in action=allow program="%JAVA_BIN%" enable=yes profile=any protocol=any >nul
 if %errorLevel% equ 0 (
-    echo       -> Thành công! Cho phép mọi cổng TCP Inbound đối với java.exe.
+    echo       -> Thành công! Cho phép mọi kết nối Inbound (TCP/UDP) đối với java.exe.
 ) else (
     echo       -> Thất bại khi tạo rule cho java.exe.
 )
 
-:: 4. Thêm Inbound Rule cho javaw.exe
+:: 4. Thêm Inbound Rule cho javaw.exe (Cho phép cả TCP và UDP)
 if not "%JAVAW_BIN%"=="" (
-    echo [2/2] Đang tạo Inbound Rule cho javaw.exe...
+    echo [2/2] Đang tạo Inbound Rule cho javaw.exe (TCP + UDP Broadcast)...
     netsh advfirewall firewall delete rule name="Java Platform SE Binary - Javaw (RMI Inbound)" >nul 2>&1
-    netsh advfirewall firewall add rule name="Java Platform SE Binary - Javaw (RMI Inbound)" dir=in action=allow program="%JAVAW_BIN%" enable=yes profile=any protocol=TCP >nul
+    netsh advfirewall firewall add rule name="Java Platform SE Binary - Javaw (RMI Inbound)" dir=in action=allow program="%JAVAW_BIN%" enable=yes profile=any protocol=any >nul
     if %errorLevel% equ 0 (
-        echo       -> Thành công! Cho phép mọi cổng TCP Inbound đối với javaw.exe.
+        echo       -> Thành công! Cho phép mọi kết nối Inbound (TCP/UDP) đối với javaw.exe.
     ) else (
         echo       -> Thất bại khi tạo rule cho javaw.exe.
     )
@@ -58,9 +58,8 @@ if not "%JAVAW_BIN%"=="" (
 
 echo.
 echo ======================================================================
-echo [HOÀN TẤT] Phương án 2 (Application-Level Rule) đã được kích hoạt!
-echo Từ bây giờ, Java có thể tự do mở bất kỳ cổng ngẫu nhiên nào cho RMI Callback
-echo mà KHÔNG bị Windows Defender Firewall chặn lại khi chạy giữa 2 máy.
+echo [HOÀN TẤT] Tường lửa đã mở toàn diện:
+echo 1. RMI TCP Socket (Port 1099 + Cổng ngẫu nhiên Callback)
+echo 2. UDP Broadcast Auto-Discovery (Port 8888, nhịp 2 giây)
 echo ======================================================================
 pause
-

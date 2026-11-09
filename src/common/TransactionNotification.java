@@ -1,13 +1,15 @@
 package common;
 
-import java.io.Serializable;
+import java.io.Serializable; // truyền tham trị
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Thông tin biến động số dư gửi từ Server về Client qua RMI Callback (Observer pattern).
+ * Thông tin biến động số dư gửi từ Server về Client qua RMI Callback (Observer
+ * pattern).
  */
 public class TransactionNotification implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     private String fromAccount;
@@ -23,7 +25,7 @@ public class TransactionNotification implements Serializable {
     }
 
     public TransactionNotification(String fromAccount, String toAccount, double amount,
-                                   String content, double newBalance, String transactionType) {
+            String content, double newBalance, String transactionType) {
         this.fromAccount = fromAccount;
         this.toAccount = toAccount;
         this.amount = amount;
@@ -96,15 +98,14 @@ public class TransactionNotification implements Serializable {
 
     @Override
     public String toString() {
-        return "TransactionNotification{" +
-                "fromAccount='" + fromAccount + '\'' +
-                ", toAccount='" + toAccount + '\'' +
-                ", amount=" + amount +
-                ", content='" + content + '\'' +
-                ", newBalance=" + newBalance +
-                ", transactionType='" + transactionType + '\'' +
-                ", timestamp=" + getFormattedTime() +
-                '}';
+        return "TransactionNotification{"
+                + "fromAccount='" + fromAccount + '\''
+                + ", toAccount='" + toAccount + '\''
+                + ", amount=" + amount
+                + ", content='" + content + '\''
+                + ", newBalance=" + newBalance
+                + ", transactionType='" + transactionType + '\''
+                + ", timestamp=" + getFormattedTime()
+                + '}';
     }
 }
-

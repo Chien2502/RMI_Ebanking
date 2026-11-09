@@ -56,6 +56,7 @@ RMI_Ebanking/
 ├── run_client_0123.bat                 # Script chạy Client tài khoản 0123 (Nguyễn Văn A)
 ├── run_client_0456.bat                 # Script chạy Client tài khoản 0456 (Trần Thị B)
 ├── run_test.bat                        # Script chạy kiểm thử tự động
+├── setup_firewall.bat                  # Script cấu hình Application Rule cho Windows Firewall
 └── README.md
 ```
 
@@ -72,7 +73,7 @@ RMI_Ebanking/
 
 ---
 
-## 4. Hướng dẫn biên dịch và chạy ứng dụng
+## 4. Hướng dẫn biên dịch và chạy trên cùng 1 máy (Localhost)
 
 ### Bước 1: Biên dịch mã nguồn
 Chạy file `compile.bat` hoặc mở terminal tại thư mục gốc và chạy:
@@ -83,21 +84,21 @@ javac -encoding UTF-8 -d bin src/common/*.java src/server/*.java src/client/*.ja
 ### Bước 2: Khởi động Server
 Chạy file `run_server.bat` hoặc lệnh:
 ```powershell
-java -cp bin server.ServerMain
+java "-Dfile.encoding=UTF-8" -cp bin server.ServerMain
 ```
 Server sẽ tự khởi tạo RMI Registry tại cổng `1099` và bind dịch vụ `BankService`.
 
 ### Bước 3: Mở Client B (nhận tiền)
 Chạy file `run_client_0456.bat` hoặc lệnh:
 ```powershell
-java -cp bin client.ClientMain 0456
+java "-Dfile.encoding=UTF-8" -cp bin client.ClientMain 0456
 ```
 Cửa sổ Client `0456` (Trần Thị B) sẽ mở lên và tự động đăng ký callback với Server.
 
 ### Bước 4: Mở Client A (chuyển tiền)
 Chạy file `run_client_0123.bat` hoặc lệnh:
 ```powershell
-java -cp bin client.ClientMain 0123
+java "-Dfile.encoding=UTF-8" -cp bin client.ClientMain 0123
 ```
 Trên Client `0123`:
 1. Nhập **Số tiền**: `1000`
@@ -114,10 +115,40 @@ Trên Client `0123`:
 
 ---
 
-## 5. Chạy kiểm thử tự động (Fresh Verification Evidence)
+## 5. Hướng dẫn chạy giữa 2 máy khác nhau qua mạng LAN / Wi-Fi (Phương án 2: Application-Level Firewall Rule)
+
+Khi chạy giữa 2 máy khác nhau, Server và Client phải trao đổi qua cổng mạng LAN thật và các cổng ngẫu nhiên của RMI Callback. Để vượt qua Windows Defender Firewall mà không bị chặn:
+
+### Bước 1: Mở quyền Tường lửa theo ứng dụng Java (Chạy trên CẢ 2 MÁY)
+- Chuột phải vào file `setup_firewall.bat`, chọn **"Run as administrator"**.
+- Script sẽ tự động thêm quy tắc cho phép `java.exe` và `javaw.exe` mở bất kỳ cổng Inbound nào mà không bị Windows Firewall chặn.
+
+### Bước 2: Khởi động Server trên Máy 1
+- Mở `run_server.bat` trên Máy 1.
+- Màn hình Console sẽ in rõ địa chỉ IP mạng LAN của máy chủ, ví dụ:
+  ```
+  [ServerMain] IP máy chủ được công bố: 192.168.1.15
+  [ServerMain] Cổng RMI Registry: 1099
+  ```
+
+### Bước 3: Mở Client trên Máy 2 (Nhập IP Server)
+- Mở client trên Máy 2 bằng cách chạy:
+  ```powershell
+  java "-Dfile.encoding=UTF-8" -cp bin client.ClientMain 0456 192.168.1.15
+  ```
+  *(Hoặc chỉ cần click đúp mở `ClientMain`, hộp thoại Swing sẽ hiện ra cho phép bạn gõ Số tài khoản và IP của BankServer).*
+- Client trên Máy 2 tự động phát hiện IP LAN của chính nó và gửi về Server để đăng ký Callback.
+
+### Bước 4: Kiểm tra chuyển tiền liên máy
+- Trên Máy 1 (hoặc máy khác), chuyển tiền tới tài khoản `0456`.
+- Máy 2 lập tức nảy Popup biến động số dư qua mạng LAN mượt mà 100%!
+
+---
+
+## 6. Chạy kiểm thử tự động (Fresh Verification Evidence)
 Chạy file `run_test.bat` hoặc:
 ```powershell
-java -cp bin test.RmiEbankingIntegrationTest
+java "-Dfile.encoding=UTF-8" -cp bin test.RmiEbankingIntegrationTest
 ```
 Bộ kiểm thử sẽ kiểm tra tự động 9/9 ca:
 1. Tạo Registry và bind RMI service
@@ -129,4 +160,3 @@ Bộ kiểm thử sẽ kiểm tra tự động 9/9 ca:
 7. Observer Callback nhận chuyển khoản thời gian thực
 8. Hủy callback an toàn khi client ngắt kết nối
 9. Lưu trữ bền vững (Persistence) qua đọc lại file CSV.
-
